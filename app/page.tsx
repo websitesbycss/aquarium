@@ -1,171 +1,129 @@
 'use client';
 
-import { AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { useCallback, useEffect, useState } from 'react';
-import CategoryBars from '@/components/CategoryBars';
-import GelButton from '@/components/GelButton';
-import GlassCard from '@/components/GlassCard';
-import Lagoon from '@/components/Lagoon';
-import PercentileBadge from '@/components/PercentileBadge';
-import PurchaseList from '@/components/PurchaseList';
-import SwapDrawer from '@/components/SwapDrawer';
-import TigerPanel from '@/components/TigerPanel';
-import { HONESTY, type LagoonData, type PurchaseOut, type Stats, type SwapResult } from '@/lib/types';
+import Dock, { type SheetId } from '@/components/Dock';
+import Gauge from '@/components/Gauge';
+import Island from '@/components/Island';
+import LiquidDefs from '@/components/LiquidDefs';
+import Orbs from '@/components/Orbs';
+import { AboutBody, BreakdownPanel, PurchasesPanel, TigerBody } from '@/components/Panels';
+import Scene from '@/components/Scene';
+import Sheet from '@/components/Sheet';
+import StringLights from '@/components/StringLights';
+import SwapCard from '@/components/SwapCard';
+import TigerChip from '@/components/TigerChip';
+import { usePointerFx, useAquarium } from '@/lib/useAquarium';
+import { HONESTY, type PurchaseOut, type SwapResult } from '@/lib/types';
 
-const BOKEH = [
-  { l: '6%', t: '14%', s: 90, d: 0 },
-  { l: '78%', t: '10%', s: 130, d: 4 },
-  { l: '90%', t: '52%', s: 70, d: 8 },
-  { l: '12%', t: '62%', s: 110, d: 2 },
-  { l: '48%', t: '8%', s: 60, d: 6 },
-];
+const TITLES: Record<SheetId, string> = {
+  purchases: 'Recent purchases',
+  breakdown: 'Where the carbon comes from',
+  tiger: 'Tiger Data, live',
+  about: 'About the numbers',
+};
+
+function noteFor(clarity: number): string {
+  if (clarity >= 0.85) return 'Clear skies. Your lagoon is sparkling this week.';
+  if (clarity >= 0.55) return 'Clear skies ahead: swap one ride to bring the sparkle back.';
+  return 'Your lagoon is resting this week.';
+}
+
+function useCompact() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 760px)');
+    const set = () => setCompact(mq.matches);
+    set();
+    mq.addEventListener('change', set);
+    return () => mq.removeEventListener('change', set);
+  }, []);
+  return compact;
+}
 
 export default function Home() {
-  const [data, setData] = useState<LagoonData | null>(null);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [drawer, setDrawer] = useState<PurchaseOut | null>(null);
+  const { data, stats, error } = useAquarium();
+  usePointerFx();
+  const compact = useCompact();
+
+  const [sheet, setSheet] = useState<SheetId | null>(null);
+  const [swap, setSwap] = useState<PurchaseOut | null>(null);
   const [whatIf, setWhatIf] = useState<SwapResult | null>(null);
 
-  const loadLagoon = useCallback(async () => {
-    try {
-      const res = await fetch('/api/lagoon', { cache: 'no-store' });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error ?? 'Could not load the lagoon');
-      setData(j);
-      setError(null);
-    } catch (e) {
-      setError((e as Error).message);
-    }
+  const openSwap = useCallback((p: PurchaseOut) => {
+    setSheet(null);
+    setSwap(p);
   }, []);
-
-  const loadStats = useCallback(async () => {
-    try {
-      const res = await fetch('/api/stats', { cache: 'no-store' });
-      if (res.ok) setStats(await res.json());
-    } catch {
-      /* the panel just keeps its last values */
-    }
-  }, []);
-
-  useEffect(() => {
-    loadLagoon();
-    loadStats();
-    const a = setInterval(loadLagoon, 6000);
-    const b = setInterval(loadStats, 3000);
-    // Pull new Nessie purchases every 10s; refresh the lagoon only if something arrived.
-    const c = setInterval(async () => {
-      try {
-        const res = await fetch('/api/nessie/sync', { method: 'POST' });
-        const j = await res.json();
-        if (j.inserted > 0) loadLagoon();
-      } catch {
-        /* retried on the next tick */
-      }
-    }, 10000);
-    return () => {
-      clearInterval(a);
-      clearInterval(b);
-      clearInterval(c);
-    };
-  }, [loadLagoon, loadStats]);
-
-  const closeDrawer = useCallback(() => {
-    setDrawer(null);
+  const closeSwap = useCallback(() => {
+    setSwap(null);
     setWhatIf(null);
+  }, []);
+  const toggleSheet = useCallback((id: SheetId) => {
+    setSwap(null);
+    setWhatIf(null);
+    setSheet((cur) => (cur === id ? null : id));
   }, []);
 
   const clarity = whatIf?.after.clarity ?? data?.clarity ?? 1;
   const percentile = whatIf?.after.percentile ?? data?.percentile ?? 0;
+  const weekKg = whatIf?.after.weekKg ?? data?.weekKg ?? null;
+  const dimmed = sheet !== null || swap !== null;
 
   return (
-    <>
-      <div className="bokeh" aria-hidden>
-        {BOKEH.map((b, i) => (
-          <i key={i} style={{ left: b.l, top: b.t, width: b.s, height: b.s, animationDelay: `-${b.d}s` }} />
-        ))}
-      </div>
-      <div className="flare" aria-hidden />
-      <div className="hill" aria-hidden />
+    <LayoutGroup>
+      <LiquidDefs />
+      <Scene clarity={clarity} />
 
-      <main className={`shell ${drawer ? 'pushed' : ''}`}>
-        <header className="topbar">
-          <div className="brand">
-            <Image
-              src="/aquarium-logo-purple-text.png"
-              alt=""
-              width={2917}
-              height={677}
-              priority
-              className="logo"
-            />
-            <h1 className="sr-only">Aquarium</h1>
-          </div>
-          <div className="pills">
-            <span className="gel static">
-              Balance {data?.balance != null ? `$${data.balance.toFixed(2)}` : '…'}
-            </span>
-            <span className="gel green static">
-              Runway {data?.runwayDays != null ? `${data.runwayDays} days` : '…'}
-            </span>
-            <GelButton onClick={loadLagoon}>Refresh</GelButton>
-          </div>
-        </header>
+      <main className={`stage ${dimmed ? 'pushed' : ''}`}>
+        <StringLights days={data?.runwayDays ?? null} />
 
-        {error && !data && <p className="err">{error}. Retrying shortly.</p>}
-
-        <div className="grid">
-          <GlassCard title="This week">
-            {data ? (
-              <>
-                <div>
-                  <div className="stat"><span>Your week</span><b>{(whatIf?.after.weekKg ?? data.weekKg).toFixed(1)} kg CO2e</b></div>
-                  <div className="stat"><span>Typical student</span><b>{data.cohortMedianKg.toFixed(1)} kg</b></div>
-                  <div className="stat"><span>Spent</span><b>${data.weekUsd.toFixed(2)}</b></div>
-                  <div className="stat"><span>Compared with</span><b>{data.cohortSize.toLocaleString()} students</b></div>
-                </div>
-                {whatIf && <p style={{ fontWeight: 700 }}>Previewing: {whatIf.swap.label}</p>}
-              </>
-            ) : (
-              <p>Filling the lagoon…</p>
-            )}
-          </GlassCard>
-
-          <GlassCard className="lagoon-wrap">
-            <Lagoon
-              purchases={data?.recentPurchases ?? []}
-              clarity={clarity}
-              runwayDays={data?.runwayDays ?? null}
-              onSelect={setDrawer}
-            >
-              <div className="badge-float">
-                <PercentileBadge percentile={percentile} />
-              </div>
-            </Lagoon>
-          </GlassCard>
-
-          <GlassCard title="Recent purchases">
-            <PurchaseList purchases={data?.recentPurchases ?? []} onSwap={setDrawer} />
-          </GlassCard>
+        <div className="top-row">
+          <Island data={data} weekKg={weekKg} />
         </div>
+        <TigerChip stats={stats} onOpen={() => toggleSheet('tiger')} />
 
-        <GlassCard title="Where the carbon comes from this week" className="bottom-strip">
-          <CategoryBars cats={data?.topCategories ?? []} />
-        </GlassCard>
-
-        <footer className="footer">
-          <p>{HONESTY}</p>
-          <p>
-            <b>Aquarium</b> · useaquarium.tech
+        <motion.div
+          className={`hero ${swap ? 'lifted' : ''}`}
+          initial={{ opacity: 0, scale: 0.7, y: 40 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', bounce: 0.2, duration: 1.2, delay: 0.2 }}
+        >
+          <Gauge percentile={percentile} previewing={whatIf !== null} />
+          <p className="hero-note lg refract" aria-live="polite">
+            {whatIf ? `Previewing: ${whatIf.swap.label}` : noteFor(clarity)}
           </p>
-        </footer>
+        </motion.div>
+
+        {data ? (
+          <Orbs purchases={data.recentPurchases} selectedId={swap?.id ?? null} onSelect={openSwap} max={compact ? 6 : 12} compact={compact} />
+        ) : (
+          <p className="loading">Filling the lagoon…</p>
+        )}
+        {error && !data && <p className="err toast">{error}. Retrying shortly.</p>}
       </main>
 
+      <Dock active={sheet} onSelect={toggleSheet} />
+
       <AnimatePresence>
-        {drawer && <SwapDrawer key={drawer.id} purchase={drawer} onClose={closeDrawer} onResult={setWhatIf} />}
+        {sheet && (
+          <Sheet key={sheet} title={TITLES[sheet]} onClose={() => setSheet(null)}>
+            {sheet === 'purchases' && <PurchasesPanel purchases={data?.recentPurchases ?? []} onSwap={openSwap} />}
+            {sheet === 'breakdown' && <BreakdownPanel cats={data?.topCategories ?? []} />}
+            {sheet === 'tiger' && <TigerBody stats={stats} />}
+            {sheet === 'about' && <AboutBody />}
+          </Sheet>
+        )}
       </AnimatePresence>
-      <TigerPanel stats={stats} />
-    </>
+
+      <AnimatePresence>
+        {swap && <SwapCard key={swap.id} purchase={swap} onClose={closeSwap} onResult={setWhatIf} />}
+      </AnimatePresence>
+
+      <footer className="honesty">
+        <span>{HONESTY}</span>
+        <span className="sep"> · </span>
+        <b>Aquarium</b> · useaquarium.tech
+      </footer>
+    </LayoutGroup>
   );
 }
