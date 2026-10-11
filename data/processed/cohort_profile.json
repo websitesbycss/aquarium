@@ -1,0 +1,29 @@
+{
+  "source": "BLS Consumer Expenditure Surveys, Table 1300, Age of reference person, 2024, Under 25 years",
+  "peoplePerConsumerUnit": 1.9,
+  "weeksPerYear": 52,
+  "assumptions": [
+    "Annual household mean / average people per consumer unit / 52 = weekly spend per student.",
+    "Public and other transportation split: 45% air, 35% rideshare/taxi, 20% transit (assumed).",
+    "Audio and visual equipment and services split: 40% electronics, 60% subscriptions (assumed).",
+    "subscriptions_digital also includes cellular phone service.",
+    "entertainment = BLS Entertainment minus audio and visual (which is counted above).",
+    "other = Miscellaneous + Reading.",
+    "Housing, insurance, education, healthcare excluded."
+  ],
+  "weeklyMeanUsd": {
+    "groceries": 42.4,
+    "restaurants": 30.62,
+    "gasoline": 17.27,
+    "travel_air": 2.86,
+    "rideshare_taxi": 2.22,
+    "public_transit": 1.27,
+    "entertainment": 12.91,
+    "apparel": 15.6,
+    "personal_care": 6.55,
+    "electronics": 2.26,
+    "subscriptions_digital": 11.47,
+    "other": 4.74
+  },
+  "weeklyTotalUsd": 150.17
+}

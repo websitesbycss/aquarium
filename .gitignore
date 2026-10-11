@@ -1,0 +1,23 @@
+# env
+.env
+.env.*
+!.env.example
+
+# deps / build
+/node_modules
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
+
+# logs / misc
+.DS_Store
+*.pem
+npm-debug.log*
+
+# vercel
+.vercel
+
+# large raw datasets (processed outputs are committed)
+/data/raw/

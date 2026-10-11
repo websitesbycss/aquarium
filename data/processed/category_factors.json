@@ -1,0 +1,117 @@
+{
+  "restaurants": {
+    "label": "Restaurants",
+    "epaCode": "722513",
+    "epaName": "Limited-Service Restaurants",
+    "kgPerUsd": 0.22,
+    "method": "single row",
+    "note": "Limited-service restaurants",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "groceries": {
+    "label": "Groceries",
+    "epaCode": "311*",
+    "epaName": "Groceries: median of 43 NAICS rows (311)",
+    "kgPerUsd": 0.363,
+    "method": "median of 43 rows",
+    "note": "Food manufacturing commodities. Supermarket rows are the retail margin only, so they would understate food.",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "rideshare_taxi": {
+    "label": "Rideshare and taxi",
+    "epaCode": "485310",
+    "epaName": "Taxi Service",
+    "kgPerUsd": 0.493,
+    "method": "single row",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "gasoline": {
+    "label": "Gasoline",
+    "epaCode": "324110",
+    "epaName": "Petroleum Refineries",
+    "kgPerUsd": 0.414,
+    "method": "single row",
+    "note": "Petroleum refineries (the fuel itself)",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "public_transit": {
+    "label": "Public transit",
+    "epaCode": "485113",
+    "epaName": "Bus and Other Motor Vehicle Transit Systems",
+    "kgPerUsd": 0.493,
+    "method": "single row",
+    "note": "EPA publishes one factor for all ground passenger transport, so this equals rideshare_taxi per dollar",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "entertainment": {
+    "label": "Entertainment",
+    "epaCode": "711*,712*,713*",
+    "epaName": "Entertainment: median of 25 NAICS rows (711, 712, 713)",
+    "kgPerUsd": 0.117,
+    "method": "median of 25 rows",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "apparel": {
+    "label": "Apparel",
+    "epaCode": "315*",
+    "epaName": "Apparel: median of 7 NAICS rows (315)",
+    "kgPerUsd": 0.104,
+    "method": "median of 7 rows",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "personal_care": {
+    "label": "Personal care",
+    "epaCode": "325620",
+    "epaName": "Toilet Preparation Manufacturing",
+    "kgPerUsd": 0.175,
+    "method": "single row",
+    "note": "Toilet preparation manufacturing",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "electronics": {
+    "label": "Electronics",
+    "epaCode": "3341*,3342*,3343*",
+    "epaName": "Electronics: median of 7 NAICS rows (3341, 3342, 3343)",
+    "kgPerUsd": 0.074,
+    "method": "median of 7 rows",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "subscriptions_digital": {
+    "label": "Subscriptions and digital",
+    "epaCode": "515210",
+    "epaName": "Cable and Other Subscription Programming",
+    "kgPerUsd": 0.102,
+    "method": "single row",
+    "note": "Cable and other subscription programming",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "travel_air": {
+    "label": "Air travel",
+    "epaCode": "481111",
+    "epaName": "Scheduled Passenger Air Transportation",
+    "kgPerUsd": 0.685,
+    "method": "single row",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  },
+  "other": {
+    "label": "Other",
+    "epaCode": "453998",
+    "epaName": "All Other Miscellaneous Store Retailers (except Tobacco Stores)",
+    "kgPerUsd": 0.104,
+    "method": "single row",
+    "note": "Miscellaneous store retailers",
+    "source": "EPA Supply Chain GHG Emission Factors v1.4.0 (with margins, cradle to shelf)",
+    "year": 2024
+  }
+}
