@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { PurchaseOut } from '@/lib/types';
 import RunwayLanterns from './RunwayLanterns';
 
-type Bubble = { x: number; y: number; r: number; vy: number; p: PurchaseOut };
+type Bubble = { x: number; y: number; r: number; vy: number; s: number; p: PurchaseOut };
 type Fish = { x: number; y: number; phase: number; hue: number; size: number; side: number; dir: number };
 
 const FISH_COUNT = 10;
@@ -36,6 +36,7 @@ export default function Lagoon({
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const clarityRef = useRef(clarity);
+  const shown = useRef(clarity); // clarity as displayed: eased toward the target, never jumped
   const bubbles = useRef(new Map<number, Bubble>());
   const fish = useRef<Fish[]>([]);
   const size = useRef({ w: 800, h: 480 });
@@ -59,6 +60,7 @@ export default function Lagoon({
         x: w * (0.08 + 0.84 * hash(p.id)),
         y: firstLoad.current ? h * (0.15 + 0.7 * hash(p.id + 7)) : h + r,
         vy: 14 + 14 * hash(p.id + 3),
+        s: 1,
       });
     }
     firstLoad.current = false;
@@ -99,7 +101,9 @@ export default function Lagoon({
       last = now;
       const t = now / 1000;
       const { w, h } = size.current;
-      const c = clarityRef.current;
+      // Ease toward the target (about 0.6s time constant), so the water clears in motion.
+      shown.current = reduce ? clarityRef.current : shown.current + (clarityRef.current - shown.current) * (1 - Math.exp(-dt / 0.6));
+      const c = shown.current;
       ctx.clearRect(0, 0, w, h);
 
       // Fish: roam the middle when clear, drift to the edges and slow when hazy. Never disappear.
@@ -119,7 +123,9 @@ export default function Lagoon({
       for (const b of bubbles.current.values()) {
         if (!reduce) b.y -= b.vy * dt;
         if (b.y < -b.r) b.y = h + b.r;
-        drawBubble(ctx, b, hoverId.current === b.p.id);
+        const hot = hoverId.current === b.p.id;
+        b.s += ((hot ? 1.14 : 1) - b.s) * (1 - Math.exp(-dt / 0.07)); // quick, no overshoot
+        drawBubble(ctx, b, hot);
       }
       if (!reduce) raf = requestAnimationFrame(frame);
     };
@@ -226,7 +232,8 @@ export default function Lagoon({
   );
 }
 
-function drawBubble(ctx: CanvasRenderingContext2D, b: Bubble, hot: boolean) {
+function drawBubble(ctx: CanvasRenderingContext2D, src: Bubble, hot: boolean) {
+  const b = { ...src, r: src.r * src.s };
   const g = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.1, b.x, b.y, b.r);
   g.addColorStop(0, 'rgba(255,255,255,0.85)');
   g.addColorStop(0.55, 'rgba(190,240,255,0.22)');

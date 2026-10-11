@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import CategoryBars from '@/components/CategoryBars';
@@ -88,7 +89,7 @@ export default function Home() {
       <div className="flare" aria-hidden />
       <div className="hill" aria-hidden />
 
-      <main className="shell">
+      <main className={`shell ${drawer ? 'pushed' : ''}`}>
         <header className="topbar">
           <div className="brand">
             <Image
@@ -161,7 +162,9 @@ export default function Home() {
         </footer>
       </main>
 
-      {drawer && <SwapDrawer purchase={drawer} onClose={closeDrawer} onResult={setWhatIf} />}
+      <AnimatePresence>
+        {drawer && <SwapDrawer key={drawer.id} purchase={drawer} onClose={closeDrawer} onResult={setWhatIf} />}
+      </AnimatePresence>
       <TigerPanel stats={stats} />
     </>
   );
