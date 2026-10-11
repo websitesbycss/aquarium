@@ -1,5 +1,6 @@
 // Server-only Nessie (Capital One) client. Nessie requires https://, plain http fails.
 const BASE = 'https://api.nessieisreal.com';
+const TIMEOUT_MS = 6000;
 
 export type NessieMerchant = { _id: string; name: string; category?: string };
 export type NessiePurchase = {
@@ -24,6 +25,8 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
     cache: 'no-store',
+    // A slow Nessie must never hang a page or a route.
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`Nessie ${init?.method ?? 'GET'} ${path} failed: HTTP ${res.status} ${text.slice(0, 200)}`);

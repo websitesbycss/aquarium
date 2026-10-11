@@ -17,12 +17,15 @@ export const DEMO_ACCOUNT = 1;
 export type Percentile = { cleanerThanPct: number; cohortMedianKg: number; cohortSize: number; ms: number };
 
 export async function cohortAsOfDay(): Promise<string> {
+  // ORDER BY ... LIMIT 1 walks the day index and stops at the first cohort row (about 30 ms).
+  // max(day) with an account filter scans the whole aggregate (about 3 s).
   const r = await query<{ d: string }>(
-    `SELECT LEAST(max(day), time_bucket(INTERVAL '1 day', now()))::date::text AS d
-     FROM daily_account_totals WHERE account_id <> $1`,
+    `SELECT day::date::text AS d FROM daily_account_totals
+     WHERE account_id <> $1 ORDER BY day DESC LIMIT 1`,
     [DEMO_ACCOUNT],
   );
-  return r[0]?.d ?? new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  return r[0] && r[0].d < today ? r[0].d : today;
 }
 
 export async function demoWindowKg(): Promise<{ kg: number; usd: number }> {
@@ -132,14 +135,24 @@ async function nessieBalance(): Promise<number | null> {
   }
 }
 
+async function timed<T>(name: string, t: Record<string, number>, p: Promise<T>): Promise<T> {
+  const t0 = performance.now();
+  try {
+    return await p;
+  } finally {
+    t[name] = Math.round(performance.now() - t0);
+  }
+}
+
 export async function lagoon() {
+  const timings: Record<string, number> = {};
   const [week, recent, cats, balance] = await Promise.all([
-    demoWindowKg(),
-    recentPurchases(12),
-    topCategories(),
-    nessieBalance(),
+    timed('window', timings, demoWindowKg()),
+    timed('recent', timings, recentPurchases(12)),
+    timed('categories', timings, topCategories()),
+    timed('balance', timings, nessieBalance()),
   ]);
-  const pct = await percentileFor(week.kg);
+  const pct = await timed('percentile', timings, percentileFor(week.kg));
   const dailyBurn = week.usd / 7;
   return {
     weekKg: Number(week.kg.toFixed(2)),
@@ -153,5 +166,6 @@ export async function lagoon() {
     recentPurchases: recent,
     topCategories: cats.map((c) => ({ ...c, kg: Number(c.kg.toFixed(2)), usd: Number(c.usd.toFixed(2)) })),
     queryMs: pct.ms,
+    timings,
   };
 }
